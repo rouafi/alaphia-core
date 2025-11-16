@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Contact } from '../../../../shared/entities/contact.entity.js';
+import { Contact } from '../../../shared/entities/contact.entity.js';
 
 export class PaginatedContactsResponseDto {
   @ApiProperty({

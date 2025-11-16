@@ -62,7 +62,7 @@ The following rules apply to the Next.js frontend application located in `front/
 - Tailwind classes must follow the design constraints above.
 - No magic numbers; stick to defined spacing scale, radii, and colors.
 
-# Table Proportions
+## Table Proportions
 - Default table row height: 40–44px.
 - Header row height: 32–36px.
 - Default cell padding: px-4 py-2.
@@ -72,11 +72,14 @@ The following rules apply to the Next.js frontend application located in `front/
 - Typography: header text-xs uppercase, body text-sm.
 
 
-# Theming rules
+## Theming rules
 - All new UI must support dark and lights theme tokens and never use hardcoded color values.
 - Every visual component must work in both light and dark modes.
 - Theme switching must be global, not per component.
 - Use CSS variables (design tokens) as the single source of truth.
+
+## Runtime
+- I need you to always run a npm intall after adding new library
 
 
 # Backend (backend/)
@@ -203,3 +206,6 @@ Before you propose architecture, generate boilerplate, or refactor:
 
 - If requirements are missing or ambiguous:
   - Say what is unclear and propose options, explicitly referencing which document you’re aligning with.
+
+## Runtime
+- I need you to always run a npm intall after adding new library

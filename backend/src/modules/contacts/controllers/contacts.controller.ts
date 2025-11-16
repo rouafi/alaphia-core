@@ -33,7 +33,7 @@ import { Contact } from '../../../shared/entities/contact.entity.js';
 
 @ApiTags('contacts')
 @ApiBearerAuth()
-@Controller('v1/contacts')
+@Controller('contacts')
 export class ContactsController {
   private readonly logger = new Logger(ContactsController.name);
 

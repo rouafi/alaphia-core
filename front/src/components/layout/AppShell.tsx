@@ -15,7 +15,7 @@ export function AppShell({ children }: AppShellProps) {
   const toggleSidebar = () => setIsSidebarCollapsed((prev) => !prev)
 
   const shellPadding = useMemo(
-    () => (isSidebarCollapsed ? "px-6 md:px-8" : "px-8 md:px-12"),
+    () => (isSidebarCollapsed ? "px-6 md:px-2" : "px-8 md:px-4"),
     [isSidebarCollapsed]
   )
 
@@ -29,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
           onToggleSidebar={toggleSidebar}
         />
         <main className="flex-1 overflow-y-auto bg-transparent">
-          <div className={`mx-auto w-full max-w-6xl py-10 ${shellPadding}`}>
+          <div className={`mx-auto w-[95%] py-10 ${shellPadding}`}>
             {children}
           </div>
         </main>

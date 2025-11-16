@@ -27,6 +27,9 @@ type AlaphiaTableProps<T> = {
   onPageChange?: (page: number) => void
   onRowClick?: (row: T, index: number) => void
   selectedRowKey?: string | number
+  // Server-side pagination props
+  totalItems?: number
+  totalPages?: number
 }
 
 /**
@@ -50,19 +53,39 @@ export function AlaphiaTable<T>({
   onPageChange,
   onRowClick,
   selectedRowKey,
+  totalItems,
+  totalPages: serverTotalPages,
 }: AlaphiaTableProps<T>) {
   const isControlled = typeof page === "number"
   const [internalPage, setInternalPage] = useState(defaultPage)
   const currentPage = isControlled ? (page as number) : internalPage
 
-  const totalPages = Math.max(1, Math.ceil((data?.length ?? 0) / pageSize))
+  // Use server-side pagination if provided, otherwise calculate client-side
+  const isServerSidePagination = serverTotalPages !== undefined
+  const totalPages = isServerSidePagination
+    ? serverTotalPages
+    : Math.max(1, Math.ceil((data?.length ?? 0) / pageSize))
+  
   const safePage = Math.min(Math.max(1, currentPage), totalPages)
-  const startIndex = (safePage - 1) * pageSize
-  const endIndex = Math.min(startIndex + pageSize, data.length)
-  const pagedData = useMemo(
-    () => data.slice(startIndex, endIndex),
-    [data, startIndex, endIndex]
-  )
+  
+  // For server-side pagination, use data as-is. For client-side, slice it.
+  const pagedData = useMemo(() => {
+    if (isServerSidePagination) {
+      return data
+    }
+    const startIndex = (safePage - 1) * pageSize
+    const endIndex = Math.min(startIndex + pageSize, data.length)
+    return data.slice(startIndex, endIndex)
+  }, [data, safePage, pageSize, isServerSidePagination])
+
+  // Calculate display indices
+  const startIndex = isServerSidePagination
+    ? (safePage - 1) * pageSize
+    : (safePage - 1) * pageSize
+  const endIndex = isServerSidePagination
+    ? Math.min(startIndex + pagedData.length, totalItems ?? pagedData.length)
+    : Math.min(startIndex + pageSize, data.length)
+  const displayTotal = isServerSidePagination ? (totalItems ?? 0) : data.length
 
   const handlePrev = () => {
     const next = Math.max(1, safePage - 1)
@@ -102,12 +125,13 @@ export function AlaphiaTable<T>({
           </thead>
           <tbody>
             {pagedData.map((row, index) => {
-              const rowKey = getRowKey?.(row, startIndex + index) ?? startIndex + index
+              const rowIndex = isServerSidePagination ? startIndex + index : startIndex + index
+              const rowKey = getRowKey?.(row, rowIndex) ?? rowIndex
               const isSelected = selectedRowKey !== undefined && selectedRowKey === rowKey
               return (
                 <tr
                   key={rowKey}
-                  onClick={() => onRowClick?.(row, startIndex + index)}
+                  onClick={() => onRowClick?.(row, rowIndex)}
                   className={cn(
                     "h-11 border-b border-[var(--border)] last:border-b-0 transition-colors",
                     onRowClick && "cursor-pointer",
@@ -131,10 +155,10 @@ export function AlaphiaTable<T>({
           </tbody>
         </table>
       </div>
-      {showPagination && data.length > 0 && (
+      {showPagination && pagedData.length > 0 && (
         <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3 text-xs text-[var(--foreground)]">
           <div>
-            Rows {startIndex + 1}–{endIndex} of {data.length}
+            Rows {startIndex + 1}–{endIndex} of {displayTotal}
           </div>
           <div className="flex items-center gap-2">
             <Button

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Mail, MessageSquareText, Plus, Star, User, Phone, Calendar, CheckCircle2, Settings } from "lucide-react"
+import { format } from "date-fns"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -12,98 +13,50 @@ import { Toolbar } from "@/components/ui/Toolbar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { AlaphiaTable, type AlaphiaTableColumn } from "@/components/ui/AlaphiaTable"
 import { DetailPanel, ContactField, CampaignSection } from "@/components/ui/DetailPanel"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { useContacts } from "@/lib/api/hooks/useContacts"
+import type { Contact, PaginatedContactsResponse } from "@/lib/api/contacts"
+import { ApiError } from "@/lib/api/client"
 
-type ContactRow = {
-  id: string
+type ContactRow = Contact & {
   name: string
-  company: string
   role: string
   segment: "Enterprise" | "Growth" | "Startup"
   lastTouch: string
   health: "Warm" | "Hot" | "Cold"
-  email?: string
   phone?: string
-  linkedInUrl?: string
   addedDate?: string
   campaignCount?: number
   campaignScore?: number
 }
 
-const contacts: ContactRow[] = [
-  {
-    id: "1",
-    name: "Nora Campbell",
-    company: "Linear",
-    role: "VP Product",
-    segment: "Enterprise",
-    lastTouch: "2h ago",
-    health: "Hot",
-    email: "nora.campbell@linear.app",
-    phone: "+1 (555) 123-4567",
-    linkedInUrl: "https://linkedin.com/in/noracampbell",
-    addedDate: "Oct. 7, 2025",
-    campaignCount: 1,
-    campaignScore: 24,
-  },
-  {
-    id: "2",
-    name: "Dev Patel",
-    company: "Vercel",
-    role: "Head of DX",
-    segment: "Enterprise",
-    lastTouch: "Yesterday",
-    health: "Warm",
-    email: "dev@vercel.com",
-    phone: "+1 (555) 234-5678",
-    linkedInUrl: "https://linkedin.com/in/devpatel",
-    addedDate: "Oct. 5, 2025",
-    campaignCount: 1,
-    campaignScore: 23,
-  },
-  {
-    id: "3",
-    name: "Mina Okafor",
-    company: "Mercury",
-    role: "Design Lead",
-    segment: "Growth",
-    lastTouch: "3 days ago",
-    health: "Cold",
-    email: "mina@mercury.com",
-    phone: "+1 (555) 345-6789",
-    linkedInUrl: "https://linkedin.com/in/minaokafor",
-    addedDate: "Oct. 3, 2025",
-  },
-  {
-    id: "4",
-    name: "Leo Fernandez",
-    company: "Figma",
-    role: "Collab PM",
-    segment: "Enterprise",
-    lastTouch: "5 days ago",
-    health: "Warm",
-    email: "leo@figma.com",
-    phone: "+1 (555) 456-7890",
-    linkedInUrl: "https://linkedin.com/in/leofernandez",
-    addedDate: "Oct. 1, 2025",
-    campaignCount: 1,
-    campaignScore: 21,
-  },
-  {
-    id: "5",
-    name: "Sophia Keller",
-    company: "Arcade",
-    role: "Founder",
-    segment: "Startup",
-    lastTouch: "1 week ago",
-    health: "Hot",
-    email: "sophia@arcade.io",
-    phone: "+1 (555) 567-8901",
-    linkedInUrl: "https://linkedin.com/in/sophiakeller",
-    addedDate: "Sep. 28, 2025",
-    campaignCount: 1,
-    campaignScore: 21,
-  },
-]
+// Helper function to generate fake segment based on company
+function getFakeSegment(company: string | null): "Enterprise" | "Growth" | "Startup" {
+  if (!company) return "Startup"
+  const hash = company.length % 3
+  return hash === 0 ? "Enterprise" : hash === 1 ? "Growth" : "Startup"
+}
+
+// Helper function to generate fake health based on contact data
+function getFakeHealth(contact: Contact): "Warm" | "Hot" | "Cold" {
+  // Use id hash to determine health
+  const hash = contact.id.charCodeAt(0) % 3
+  return hash === 0 ? "Hot" : hash === 1 ? "Warm" : "Cold"
+}
+
+// Helper function to format last touch (using createdAt for now)
+function getLastTouch(createdAt: string): string {
+  const date = new Date(createdAt)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) return "Today"
+  if (diffDays === 1) return "Yesterday"
+  if (diffDays < 7) return `${diffDays} days ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+  return format(date, "MMM d, yyyy")
+}
 
 const segments = [
   { label: "Enterprise", value: "enterprise", trend: "+3 hot" },
@@ -113,6 +66,37 @@ const segments = [
 
 export default function ContactsPage() {
   const [selectedContact, setSelectedContact] = useState<ContactRow | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
+
+  // Fetch contacts with pagination
+  const { data, isLoading, error } = useContacts({
+    page: currentPage,
+    limit: pageSize,
+  })
+
+  // Transform API data to ContactRow format
+  const contactsData = useMemo(() => {
+    if (!data) return { contacts: [], pagination: null }
+    
+    const isPaginated = !Array.isArray(data) && 'data' in data
+    const contacts = isPaginated ? (data as PaginatedContactsResponse).data : (data as Contact[])
+    const pagination = isPaginated ? (data as PaginatedContactsResponse) : null
+
+    const transformedContacts: ContactRow[] = contacts.map((contact) => ({
+      ...contact,
+      name: `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || "Unknown",
+      role: contact.position || "Unknown",
+      segment: getFakeSegment(contact.company),
+      lastTouch: getLastTouch(contact.createdAt),
+      health: getFakeHealth(contact),
+      addedDate: format(new Date(contact.createdAt), "MMM d, yyyy"),
+      campaignCount: Math.random() > 0.5 ? 1 : undefined,
+      campaignScore: Math.random() > 0.5 ? Math.floor(Math.random() * 30) + 15 : undefined,
+    }))
+
+    return { contacts: transformedContacts, pagination }
+  }, [data])
 
   const handleRowClick = (contact: ContactRow) => {
     setSelectedContact(contact)
@@ -120,6 +104,10 @@ export default function ContactsPage() {
 
   const handleClosePanel = () => {
     setSelectedContact(null)
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
   }
 
   const getInitials = (name: string) => {
@@ -167,39 +155,50 @@ export default function ContactsPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {segments.map((segment) => (
-          <Card
-            key={segment.value}
-            title={segment.label}
-            description="Active cycle"
-            padding="md"
-            actions={
-              <Badge className="border-white/10 bg-white/5 text-xs text-white/60">
-                {segment.trend}
-              </Badge>
-            }
-          >
-            <p className="text-3xl font-semibold text-[var(--foreground)]">
-              {segment.value === "enterprise"
-                ? "58"
-                : segment.value === "growth"
-                  ? "41"
-                  : "29"}
-            </p>
-            <p className="mt-1 text-xs uppercase tracking-[0.3em] text-[var(--muted)]">
-              Opportunities
-            </p>
-          </Card>
-        ))}
-      </div>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="analytics" className="border border-[var(--border)] rounded-xl bg-[var(--panel)] px-4">
+          <AccordionTrigger className="text-sm font-semibold text-[var(--foreground)] hover:no-underline py-3">
+            Analytics Overview
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid gap-4 md:grid-cols-3 pb-4">
+              {segments.map((segment) => (
+                <Card
+                  key={segment.value}
+                  title={segment.label}
+                  description="Active cycle"
+                  padding="md"
+                  actions={
+                    <Badge className="border-white/10 bg-white/5 text-xs text-white/60">
+                      {segment.trend}
+                    </Badge>
+                  }
+                >
+                  <p className="text-3xl font-semibold text-[var(--foreground)]">
+                    {segment.value === "enterprise"
+                      ? "58"
+                      : segment.value === "growth"
+                        ? "41"
+                        : "29"}
+                  </p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.3em] text-[var(--muted)]">
+                    Opportunities
+                  </p>
+                </Card>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
-      <section className="space-y-4">
+      <section className="space-y-4 w-full">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[var(--foreground)]">
             <p className="text-sm font-semibold">Active relationships</p>
             <p className="text-sm opacity-70">
-              Aphilia-style slim table with health, segments, and touchpoints.
+              {contactsData.pagination
+                ? `Showing ${contactsData.contacts.length} of ${contactsData.pagination.total} contacts`
+                : "Aphilia-style slim table with health, segments, and touchpoints."}
             </p>
           </div>
           <div className="flex gap-2">
@@ -214,78 +213,107 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        {(() => {
-          const columns: AlaphiaTableColumn<ContactRow>[] = [
-            {
-              key: "name",
-              label: "Contact",
-              render: (contact) => (
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-8 border border-white/10 bg-transparent">
-                    <AvatarFallback className="bg-[#3B82F6]/20 text-white text-xs">
-                      {contact.name
-                        .split(" ")
-                        .map((namePart) => namePart[0])
-                        .join("")
-                        .slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium text-[var(--table-foreground)]">
-                      {contact.name}
-                    </p>
-                    <p className="text-xs text-[var(--muted)]">{contact.role}</p>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: "company",
-              label: "Company",
-              className: "text-sm font-medium text-[var(--table-foreground)]",
-            },
-            {
-              key: "segment",
-              label: "Segment",
-              render: (contact) => (
-                <Badge className="rounded-full border border-slate-700/70 bg-slate-800/70 px-3 py-0.5 text-xs font-medium text-slate-200">
-                  {contact.segment}
-                </Badge>
-              ),
-            },
-            {
-              key: "health",
-              label: "Health",
-              render: (contact) => (
-                <span
-                  className={`inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-semibold ${
-                    contact.health === "Hot"
-                      ? "border-rose-400/50 bg-rose-500/10 text-rose-200"
-                      : contact.health === "Warm"
-                        ? "border-amber-400/50 bg-amber-500/10 text-amber-200"
-                        : "border-slate-600 bg-slate-800 text-slate-300"
-                  }`}
-                >
-                  {contact.health}
-                </span>
-              ),
-            },
-            {
-              key: "lastTouch",
-              label: "Last touch",
-              className: "text-sm font-medium text-[var(--table-foreground)]",
-            },
-          ]
-          return (
-            <AlaphiaTable
-              data={contacts}
-              columns={columns}
-              onRowClick={handleRowClick}
-              selectedRowKey={selectedContact?.id}
-              getRowKey={(row) => row.id}
-            />
-          )
-        })()}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-sm text-[var(--muted)]">Loading contacts...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-sm text-red-400">
+              Error: {error instanceof ApiError ? error.message : "Failed to load contacts"}
+            </p>
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <div className="overflow-x-auto">
+            {(() => {
+              const columns: AlaphiaTableColumn<ContactRow>[] = [
+                {
+                  key: "name",
+                  label: "Contact",
+                  render: (contact) => (
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-8 border border-white/10 bg-transparent">
+                        <AvatarFallback className="bg-[#3B82F6]/20 text-white text-xs">
+                          {contact.name
+                            .split(" ")
+                            .map((namePart) => namePart[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-[var(--table-foreground)]">
+                          {contact.name}
+                        </p>
+                        <p className="text-xs text-[var(--muted)]">{contact.role}</p>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "company",
+                  label: "Company",
+                  className: "text-sm font-medium text-[var(--table-foreground)]",
+                },
+                {
+                  key: "email",
+                  label: "Email",
+                  className: "text-sm font-medium text-[var(--table-foreground)]",
+                },
+                {
+                  key: "segment",
+                  label: "Segment",
+                  render: (contact) => (
+                    <Badge className="rounded-full border border-slate-700/70 bg-slate-800/70 px-3 py-0.5 text-xs font-medium text-slate-200">
+                      {contact.segment}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "health",
+                  label: "Health",
+                  render: (contact) => (
+                    <span
+                      className={`inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-semibold ${
+                        contact.health === "Hot"
+                          ? "border-rose-400/50 bg-rose-500/10 text-rose-200"
+                          : contact.health === "Warm"
+                            ? "border-amber-400/50 bg-amber-500/10 text-amber-200"
+                            : "border-slate-600 bg-slate-800 text-slate-300"
+                      }`}
+                    >
+                      {contact.health}
+                    </span>
+                  ),
+                },
+                {
+                  key: "lastTouch",
+                  label: "Last touch",
+                  className: "text-sm font-medium text-[var(--table-foreground)]",
+                },
+              ]
+              return (
+                <AlaphiaTable
+                  data={contactsData.contacts}
+                  columns={columns}
+                  onRowClick={handleRowClick}
+                  selectedRowKey={selectedContact?.id}
+                  getRowKey={(row) => row.id}
+                  page={contactsData.pagination ? currentPage : undefined}
+                  pageSize={contactsData.pagination ? pageSize : undefined}
+                  onPageChange={handlePageChange}
+                  showPagination={!!contactsData.pagination}
+                  totalItems={contactsData.pagination?.total}
+                  totalPages={contactsData.pagination?.totalPages}
+                />
+              )
+            })()}
+          </div>
+        )}
       </section>
 
       {/* Detail Panel */}
@@ -349,17 +377,17 @@ export default function ContactsPage() {
                         <div className="space-y-4">
                           <ContactField
                             label="First Name"
-                            value={selectedContact.name.split(" ")[0]}
+                            value={selectedContact.firstName || undefined}
                             icon={<User className="size-4" />}
                           />
                           <ContactField
                             label="Last Name"
-                            value={selectedContact.name.split(" ").slice(1).join(" ")}
+                            value={selectedContact.lastName || undefined}
                             icon={<User className="size-4" />}
                           />
                           <ContactField
                             label="Emails"
-                            value={selectedContact.email}
+                            value={selectedContact.email || undefined}
                             icon={<Mail className="size-4" />}
                             action={
                               <Button
@@ -372,11 +400,11 @@ export default function ContactsPage() {
                               </Button>
                             }
                           />
-                          {selectedContact.phone && (
+                          {selectedContact.url && (
                             <ContactField
-                              label="Main phone"
-                              value={selectedContact.phone}
-                              icon={<Phone className="size-4" />}
+                              label="LinkedIn URL"
+                              value={selectedContact.url}
+                              icon={<User className="size-4" />}
                             />
                           )}
                           <Button
