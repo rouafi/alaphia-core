@@ -1,0 +1,69 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: alaphia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-alaphia}
+      POSTGRES_USER: ${POSTGRES_USER:-alaphia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-alaphia}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  front:
+    image: node:20
+    container_name: alaphia-front
+    working_dir: /app
+    volumes:
+      - ./front:/app
+      - front-node-modules:/app/node_modules
+    command: sh -c "npm ci && npm run dev"
+    env_file:
+      - ./.env
+    environment:
+      # Example connecting URL for libraries that use DATABASE_URL
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-alaphia}:${POSTGRES_PASSWORD:-alaphia}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-alaphia}}
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "${FRONT_PORT:-3001}:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    image: node:20
+    container_name: alaphia-backend
+    profiles:
+      - backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - backend-node-modules:/app/node_modules
+    command: sh -c "if [ -f package.json ]; then npm install && npm run dev; else echo 'Waiting for backend implementation...'; tail -f /dev/null; fi"
+    environment:
+      # Force container to use the Docker network host 'db' instead of localhost
+      DATABASE_URL: postgresql://${POSTGRES_USER:-alaphia}:${POSTGRES_PASSWORD:-alaphia}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-alaphia}
+      BACKEND_PORT: ${BACKEND_PORT:-4000}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  front-node-modules:
+  backend-node-modules:
+
+networks:
+  default:
+    name: alaphia-net
+
+

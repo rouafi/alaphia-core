@@ -1,0 +1,205 @@
+# Frontend (front/)
+The following rules apply to the Next.js frontend application located in `front/`.
+
+## Runtime and Service
+- Service name in compose: `frontend` (profile `frontend`).
+- Default internal port: 3001 (expose/mount via docker-compose).
+
+# DESIGN SYSTEM
+
+## Global Layout
+- Use a dark theme by default.
+- Background: #0D1117 (body), #111827 for panels.
+- Surfaces/cards: #1A2234 with 1px border rgba(255,255,255,0.05).
+- Sidebar width: 260px (expanded), 72px (collapsed).
+- Global spacing scale: 8px units → 8, 12, 16, 20, 24, 32.
+
+## Components
+- Use shadcn/ui & Radix primitives for all interactive components.
+- Buttons: rounded-md (8px), subtle shadows, hover opacity 90%.
+- Inputs: rounded-md, border rgba(255,255,255,0.06), background #1F2937.
+- Avatars: circular, 32px or 24px.
+- Tables: slim rows (40px height), subtle row hover (#1E293B/30).
+- Use icons sized 18–20px, with 70% opacity in idle state.
+
+## Typography
+- Primary font: Inter, medium/semibold for headings.
+- H1: text-2xl font-semibold.
+- H2: text-xl font-medium.
+- Labels: text-xs uppercase tracking-wide opacity-60.
+- Body text: text-sm text-gray-300.
+- Muted text: text-sm text-gray-500.
+
+## Color System
+- Primary accent: #3B82F6 (Claap blue).
+- Secondary accent: #8B5CF6 (optional).
+- Border-color: rgba(255,255,255,0.05).
+- Section separators: 1px solid rgba(255,255,255,0.04).
+
+## Interaction Rules
+- Always use subtle transitions (150ms).
+- Hover states: slight brightness increase + border emphasis.
+- Active states: deeper surface + accent shadow.
+- Sidebar selection: left-accent highlight + slightly brighter background.
+
+## Visual References
+- The `/reference/claap/*.png` screenshots define spacing, component proportions,
+  table density, sidebar layout, header layout, and overall dark-theme feel.
+- DO NOT copy exact CSS or branding; reinterpret using Tailwind + shadcn/ui.
+- Cursor must base the layout hierarchy on these screenshots.
+
+## UI Atoms (Must be reused everywhere)
+- <AppShell> (sidebar + topbar)
+- <SidebarItem> (icon + label + highlight bar)
+- <PageHeader> (title + action buttons)
+- <DataTable> (Slim variant like Claap)
+- <Card> (with dark surface + border)
+- <Toolbar> (filters + search + buttons row)
+
+## Code Style
+- All components in TypeScript React functional style.
+- Break down UI into atomic components and reuse everywhere.
+- Tailwind classes must follow the design constraints above.
+- No magic numbers; stick to defined spacing scale, radii, and colors.
+
+# Table Proportions
+- Default table row height: 40–44px.
+- Header row height: 32–36px.
+- Default cell padding: px-4 py-2.
+- Rounded container: rounded-lg or rounded-xl (10–12px radius).
+- Border: 1px solid rgba(255,255,255,0.06).
+- Table grids must use subtle separators, not large spacing.
+- Typography: header text-xs uppercase, body text-sm.
+
+
+# Theming rules
+- All new UI must support dark and lights theme tokens and never use hardcoded color values.
+- Every visual component must work in both light and dark modes.
+- Theme switching must be global, not per component.
+- Use CSS variables (design tokens) as the single source of truth.
+
+
+# Backend (backend/)
+The following placeholders define the initial backend constraints. Flesh out as the backend stack is chosen.
+
+## Runtime and Service
+- Service name in compose: `backend` (profile `backend`).
+- Default internal port: 4000 (expose/mount via docker-compose).
+- Language/Framework: TBD (Node/TypeScript suggested; to be specified later).
+
+## Core Knowledge
+
+Always use these documents as the single source of truth:
+
+- Product & features: docs/alaphia_prd.md
+- Data model & DB tables: docs/alaphia_schema.md
+- NestJS project structure & DDD modules: docs/alaphia_structure.md
+- Styling & Swagger/Redoc aesthetics: docs/alaphia_styling.md
+- Tech stack & architecture rules: docs/alaphia_tech_stack.md
+- End-to-end user journey & flows: docs/alaphia_user_flow.md
+
+Before you propose architecture, generate boilerplate, or refactor:
+- Load and respect the constraints and decisions described in these files.
+- If there is a conflict:
+  - API behavior → alaphia_prd.md wins.
+  - DB schema / entities → alaphia_schema.md wins.
+  - Folder layout / module boundaries → alaphia_structure.md wins.
+  - Visual style / UI vibe (including Swagger) → alaphia_styling.md wins.
+  - Tech choices / infra → alaphia_tech_stack.md wins.
+
+## Tech Stack (Backend MVP)
+
+- Backend: NestJS + TypeScript.
+- Architecture: DDD + Hexagonal (Ports & Adapters) as described in alaphia_structure.md and alaphia_tech_stack.md.
+- DB: PostgreSQL (+ pgvector) following alaphia_schema.md.
+- Eventing: Redis Streams.
+- Auth: Auth0 (JWT) on all /v1 endpoints.
+- API surface: /v1/ingest, /v1/intents, /v1/paths with Swagger at /docs.
+
+## Type Safety & Linting
+
+- Treat **TypeScript errors and eslint errors as hard failures**, not cosmetic:
+  - Code you generate must compile with `tsc --noEmit` and pass eslint according to the project config.
+  - If you suggest code that would produce type errors, you must:
+    - Explicitly point out where and why the error would occur.
+    - Propose a corrected, type-safe version.
+
+- Strong typing requirements:
+  - Do not use `any`, `unknown`, or `as any` unless:
+    - The domain document explicitly leaves a type open, and
+    - You clearly explain why a temporary loose type is unavoidable.
+  - Prefer **explicit interfaces / types** for:
+    - DTOs, entities, repositories, domain services, and config.
+  - Always align types with:
+    - DB schema from docs/alaphia_schema.md.
+    - Domain concepts and contracts described in docs/alaphia_prd.md and docs/alaphia_structure.md.
+
+- When adding or modifying code:
+  - If an existing type definition is missing or too vague, **first introduce or refine the type**, then write the implementation.
+  - Keep API request/response types in sync with:
+    - OpenAPI/Swagger decorators.
+    - The user flows in docs/alaphia_user_flow.md.
+
+- Linting:
+  - Assume a strict eslint + prettier setup (no unused variables, no implicit any, consistent import order).
+  - When generating or refactoring files, avoid patterns that commonly trigger lint errors:
+    - Unused imports / variables.
+    - Shadowed variables.
+    - Inconsistent return types in functions.
+
+- If the user asks for a quick snippet that would break type safety:
+  - Provide a **type-safe version by default**.
+  - Optionally mention a looser variant, but clearly label it as **NOT recommended**.
+
+## Code Style & Structure
+
+- Follow the module structure and folder names from docs/alaphia_structure.md.
+- Application logic lives in domain/application layers, not in controllers.
+- Controllers are thin: validation + mapping + delegation.
+- Use strict TypeScript types (no `any` unless the domain doc explicitly leaves something open).
+- Keep ports and adapters clearly separated (no direct DB calls from domain services).
+
+## Behavior & Business Logic
+
+- When implementing ingestion, intents, and paths:
+  - Follow all functional and non-functional requirements from alaphia_prd.md.
+  - Implement WarmthScore and TrustScore exactly as specified in alaphia_prd.md and alaphia_schema.md.
+  - Respect limits: 10,000 connections per user, performance targets on /v1/paths, etc.
+
+- When creating or updating entities, DTOs, or migrations:
+  - Derive column names, types, and relationships from alaphia_schema.md.
+  - Keep naming consistent with that document.
+
+## API & Swagger
+
+- All endpoints must live under /v1 and match the PRD:
+  - POST /v1/ingest
+  - POST /v1/intents
+  - GET  /v1/paths
+- Generate OpenAPI/Swagger decorators in controllers based on alaphia_prd.md.
+- Style Swagger/Redoc to match the principles and color palette from alaphia_styling.md
+  (modern, minimalist, Claap-like, high whitespace).
+
+## User Flows
+
+- When designing request/response shapes or error handling:
+  - Use docs/alaphia_user_flow.md to ensure the API supports the described flows:
+    - Data Onboarding (ingest)
+    - Intent Definition
+    - Path Discovery
+- Align naming and semantics of responses with those flows (e.g., path items, warm scores, context).
+
+## How to respond to prompts
+
+- When the user asks for:
+  - **New modules or features** → read alaphia_prd.md, alaphia_structure.md, alaphia_schema.md.
+  - **Endpoint design / Swagger** → read alaphia_prd.md, alaphia_user_flow.md, alaphia_styling.md.
+  - **DB or migrations** → read alaphia_schema.md and keep it consistent.
+  - **Architecture decisions** → read alaphia_tech_stack.md and alaphia_structure.md.
+
+- For any generated or modified code:
+  - Ensure it is type-safe and would pass TypeScript and linting.
+  - If there is any unavoidable type looseness, call it out explicitly and propose how to tighten it later.
+
+- If requirements are missing or ambiguous:
+  - Say what is unclear and propose options, explicitly referencing which document you’re aligning with.
