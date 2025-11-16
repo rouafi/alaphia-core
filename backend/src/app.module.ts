@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from './shared/database/typeorm.config.js';
 import { MigrationRunnerService } from './shared/database/migration-runner.service.js';
-import { IngestionModule } from './modules/ingestion/ingestion.module.js';
+import { ContactsModule } from './modules/contacts/contacts.module.js';
 import { IntentsModule } from './modules/intents/intents.module.js';
 import { PathsModule } from './modules/paths/paths.module.js';
 
@@ -13,7 +13,7 @@ import { PathsModule } from './modules/paths/paths.module.js';
     TypeOrmModule.forRootAsync({
       useFactory: () => typeOrmConfig,
     }),
-    IngestionModule,
+    ContactsModule,
     IntentsModule,
     PathsModule,
   ],

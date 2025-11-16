@@ -57,7 +57,7 @@ export function DetailPanel({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 z-40 bg-black/20 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />

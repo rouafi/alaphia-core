@@ -24,7 +24,7 @@ services:
     volumes:
       - .:/workspace
       - front-node-modules:/workspace/node_modules
-    command: sh -c "npm ci --include=optional && npm rebuild && npm --workspace front run dev"
+    command: sh -c "npm ci && npm rebuild && npm --workspace front run dev"
     env_file:
       - ./.env
     environment:

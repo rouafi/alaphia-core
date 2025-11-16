@@ -1,20 +1,47 @@
-import { Body, Controller, HttpCode, Post, Logger, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Logger,
+  UploadedFile,
+  UseInterceptors,
+  Query,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IngestRequestDto } from '../dto/ingest-request.dto.js';
+import { PaginationQueryDto } from '../dto/pagination-query.dto.js';
+import { PaginatedContactsResponseDto } from '../dto/paginated-contacts-response.dto.js';
 import { IngestContactsService } from '../application/ingest-contacts.service.js';
 import { CsvParserService } from '../application/csv-parser.service.js';
 import { RawContactData } from '../application/data-validation.service.js';
+import { Inject } from '@nestjs/common';
+import {
+  ContactRepositoryPort,
+  CONTACT_REPOSITORY_PORT,
+  PaginatedResult,
+} from '../domain/ports/contact-repository.port.js';
+import { Contact } from '../../../shared/entities/contact.entity.js';
 
-@ApiTags('ingestion')
+@ApiTags('contacts')
 @ApiBearerAuth()
-@Controller('ingest')
-export class IngestionController {
-  private readonly logger = new Logger(IngestionController.name);
+@Controller('v1/contacts')
+export class ContactsController {
+  private readonly logger = new Logger(ContactsController.name);
 
   constructor(
     private readonly ingestService: IngestContactsService,
     private readonly csvParser: CsvParserService,
+    @Inject(CONTACT_REPOSITORY_PORT)
+    private readonly contactRepository: ContactRepositoryPort,
   ) {}
 
   @Post()
@@ -145,6 +172,57 @@ export class IngestionController {
       errorCount: result.errorCount,
       errors: result.errors.length > 0 ? result.errors : undefined,
     };
+  }
+
+  @Get()
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Get contacts for the authenticated user',
+    description:
+      'Returns paginated list of contacts. If page and limit are not provided, returns all contacts.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of contacts or all contacts if pagination not specified',
+    type: PaginatedContactsResponseDto,
+  })
+  async getContacts(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResult<Contact> | Contact[]> {
+    // TODO: Extract userId from Auth0 JWT token
+    // For now, using a placeholder - in production this comes from the authenticated user
+    const userId = '00000000-0000-0000-0000-000000000000'; // Placeholder
+
+    // If pagination parameters are provided, return paginated result
+    if (query.page !== undefined || query.limit !== undefined) {
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+
+      const result = await this.contactRepository.findByUserIdPaginated(
+        userId,
+        page,
+        limit,
+      );
+
+      this.logger.log(
+        `Retrieved page ${page} of contacts for user ${userId}: ${result.data.length} items (total: ${result.total})`,
+      );
+
+      return {
+        data: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
+    }
+
+    // If no pagination parameters, return all contacts (backward compatibility)
+    const contacts = await this.contactRepository.findByUserId(userId);
+    this.logger.log(`Retrieved ${contacts.length} contacts for user ${userId}`);
+    return contacts;
   }
 }
 
