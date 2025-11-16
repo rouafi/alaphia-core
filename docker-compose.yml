@@ -51,6 +51,8 @@ services:
       # Force container to use the Docker network host 'db' instead of localhost
       DATABASE_URL: postgresql://${POSTGRES_USER:-alaphia}:${POSTGRES_PASSWORD:-alaphia}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-alaphia}
       BACKEND_PORT: ${BACKEND_PORT:-4000}
+      # Clear any NODE_OPTIONS from host that might interfere with Docker
+      NODE_OPTIONS: ""
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     depends_on:

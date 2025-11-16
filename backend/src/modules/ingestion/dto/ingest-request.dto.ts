@@ -39,11 +39,22 @@ export class IngestRequestDto {
   @IsIn(['LINKEDIN_EXPORT', 'GMAIL_SYNC', 'CSV_UPLOAD'])
   sourceType!: 'LINKEDIN_EXPORT' | 'GMAIL_SYNC' | 'CSV_UPLOAD';
 
-  @ApiProperty({ type: [ContactRecordDto] })
+  @ApiProperty({ type: [ContactRecordDto], required: false })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ContactRecordDto)
-  records!: ContactRecordDto[];
+  records?: ContactRecordDto[];
+
+  @ApiProperty({ required: false, description: 'CSV content for CSV_UPLOAD source type (can be base64-encoded or plain text with \\n for newlines)' })
+  @IsOptional()
+  @IsString()
+  csvContent?: string;
+}
+
+export class FileUploadDto {
+  @ApiProperty({ type: 'string', format: 'binary', description: 'CSV file to upload' })
+  file!: Express.Multer.File;
 }
 
 

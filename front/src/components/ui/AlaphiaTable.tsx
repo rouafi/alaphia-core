@@ -6,16 +6,16 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-export type ClaapTableColumn<T> = {
+export type AlaphiaTableColumn<T> = {
   key: keyof T | string
   label: string
   render?: (row: T) => ReactNode
   className?: string
 }
 
-type ClaapTableProps<T> = {
+type AlaphiaTableProps<T> = {
   data: T[]
-  columns: ClaapTableColumn<T>[]
+  columns: AlaphiaTableColumn<T>[]
   className?: string
   containerClassName?: string
   headerClassName?: string
@@ -28,13 +28,13 @@ type ClaapTableProps<T> = {
 }
 
 /**
- * ClaapTable
- * Dense, slim table matching Aphilia proportions:
+ * AlaphiaTable
+ * Dense, slim table matching Alaphia proportions:
  * - Container: rounded-xl, subtle border, elevated dark surface
  * - Header: text-xs, uppercase, tracking-wide, muted
  * - Rows: ~44px height, tight px-4/py-2 padding, hairline grid, subtle hover
  */
-export function ClaapTable<T>({
+export function AlaphiaTable<T>({
   data,
   columns,
   className,
@@ -46,7 +46,7 @@ export function ClaapTable<T>({
   page,
   defaultPage = 1,
   onPageChange,
-}: ClaapTableProps<T>) {
+}: AlaphiaTableProps<T>) {
   const isControlled = typeof page === "number"
   const [internalPage, setInternalPage] = useState(defaultPage)
   const currentPage = isControlled ? (page as number) : internalPage

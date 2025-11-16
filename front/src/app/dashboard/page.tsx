@@ -5,7 +5,7 @@ import { ArrowUpRight, Play, UploadCloud } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/Card"
-import { ClaapTable, type ClaapTableColumn } from "@/components/ui/ClaapTable"
+import { AlaphiaTable, type AlaphiaTableColumn } from "@/components/ui/AlaphiaTable"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { Toolbar } from "@/components/ui/Toolbar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -72,7 +72,7 @@ const recordings: RecordingRow[] = [
   },
 ]
 
-const recordingColumns: ClaapTableColumn<RecordingRow>[] = [
+const recordingColumns: AlaphiaTableColumn<RecordingRow>[] = [
   {
     key: "title",
     label: "Recording",
@@ -218,7 +218,7 @@ export default function DashboardPage() {
             </Button>
           }
         >
-          <ClaapTable data={recordings} columns={recordingColumns} />
+          <AlaphiaTable data={recordings} columns={recordingColumns} />
         </Card>
 
         <div className="space-y-4">

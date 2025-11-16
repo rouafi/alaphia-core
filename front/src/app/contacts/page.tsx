@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { Toolbar } from "@/components/ui/Toolbar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ClaapTable, type ClaapTableColumn } from "@/components/ui/ClaapTable"
+import { AlaphiaTable, type AlaphiaTableColumn } from "@/components/ui/AlaphiaTable"
 
 type ContactRow = {
   name: string
@@ -154,7 +154,7 @@ export default function ContactsPage() {
         </div>
 
         {(() => {
-          const columns: ClaapTableColumn<ContactRow>[] = [
+          const columns: AlaphiaTableColumn<ContactRow>[] = [
             {
               key: "name",
               label: "Contact",
@@ -215,7 +215,7 @@ export default function ContactsPage() {
               className: "text-sm font-medium text-[var(--table-foreground)]",
             },
           ]
-          return <ClaapTable data={contacts} columns={columns} />
+          return <AlaphiaTable data={contacts} columns={columns} />
         })()}
       </section>
     </div>

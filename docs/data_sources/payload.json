@@ -1,0 +1,14 @@
+   {
+     "sourceType": "CSV_UPLOAD",
+     "csvContent": "First Name,Last Name,URL,Email Address,Company,Position,Connected On
+Sviatoslav,S.,https://www.linkedin.com/in/sviatoslav-s-592a32278,,Eleken.,Design Solution Specialist,11 Nov 2025
+Jonathan,Fiol,https://www.linkedin.com/in/jonathan-fiol-4587528,,Photon Partners,Founding Partner,10 Nov 2025
+Mayssa,Hemraj,https://www.linkedin.com/in/mayssa-hemraj-b14190a8,,Sloworker,Cofondatrice,10 Nov 2025
+Geoffrey,Harrazi,https://www.linkedin.com/in/geoffrey-harrazi9,,Parfums Christian Dior,Tech Lead Generative AI | LLMOps & MLOps,10 Nov 2025
+Fabien,Punin,https://www.linkedin.com/in/fabien-punin,,Opsima,Co-founder & CDO,10 Nov 2025
+Zouhir,Cherfi,https://www.linkedin.com/in/zouhir-cherfi-532738a6,,Centre Lasers Intenses et Applications,Ingénieur,09 Nov 2025
+Louis,Hauvette,https://www.linkedin.com/in/louishauvette,,Siteflow,Co-founder & CEO,08 Nov 2025
+Yann,Offredi,https://www.linkedin.com/in/yann-offredi-1a6a4618,,Hones,CTO part-time – Sentinelys,08 Nov 2025
+Florian,Fesseler,https://www.linkedin.com/in/ffesseler,,Mozza,Chief Technology Officer,07 Nov 2025
+Mohamed,Amami,https://www.linkedin.com/in/mohaamami,,iObeya,Head of Engineering,07 Nov 2025"
+   }
