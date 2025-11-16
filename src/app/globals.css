@@ -1,0 +1,105 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Juno", var(--font-inter), "Inter", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular",
+    "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--foreground);
+  --color-secondary: var(--panel);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: #1f2937;
+  --color-muted-foreground: #94a3b8;
+  --color-primary: var(--accent);
+  --color-primary-foreground: #f8fafc;
+  --color-ring: rgba(59, 130, 246, 0.45);
+}
+
+:root {
+  /* Light theme */
+  color-scheme: light;
+  --radius: 0.5rem;
+  /* Surfaces (navbar + main window per lemlist-light-theme reference) */
+  --background: #F8F9FB;      /* app page background */
+  --panel: #FFFFFF;           /* navbar/panels/cards */
+  --surface: #F5F6F8;         /* table rows/soft blocks */
+  --surface-alt: #EEF0F3;     /* inputs/toolbar chips */
+  /* Text (neutral grayscale, not pure black) */
+  --foreground: #1A1F2C;      /* primary */
+  --muted: #5B6270;           /* secondary */
+  /* Table-specific foregrounds (per lemlist reference) */
+  --table-foreground: #203856;            /* body cell text e.g., contact name */
+  --table-header-foreground: #6F7C8F;     /* header label gray */
+  /* Borders & dividers (light neutral, soft contrast) */
+  --border: #E2E4EA;
+  --divider: #ECEDF1;
+  /* Accents (same hue, slightly lighter saturation in light mode) */
+  --accent: #4A8AF5;          /* blue */
+  --accent-secondary: #9488F5;/* purple */
+  /* Status */
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+:root.dark {
+  /* Dark theme (existing) */
+  color-scheme: dark;
+  --radius: 0.5rem;
+  --background: #0d1117;
+  --panel: #111827;
+  --surface: #1a2234;
+  --surface-alt: #151b28;
+  --foreground: #f1f5f9;
+  --muted: #94a3b8;
+  --table-foreground: #f1f5f9;
+  --table-header-foreground: #cbd5e1;
+  --border: rgba(255, 255, 255, 0.05);
+  --divider: rgba(255, 255, 255, 0.04);
+  --accent: #3b82f6;
+  --accent-secondary: #8b5cf6;
+  --success: #22d3ee;
+  --warning: #f59e0b;
+  --danger: #f87171;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline: none;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+
+  :is(button, a, input, textarea, select) {
+    @apply transition-colors duration-150;
+  }
+}
+
+@layer utilities {
+  .surface-card {
+    @apply rounded-lg border border-[var(--border)] bg-[var(--surface)];
+  }
+
+  .text-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60;
+  }
+}

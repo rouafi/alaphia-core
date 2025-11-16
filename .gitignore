@@ -1,0 +1,62 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node
+node_modules/
+.pnp/
+.pnp.js
+
+# Next.js
+.next/
+.next/cache/
+out/
+# If using Next.js standalone output
+standalone/
+
+# Build outputs
+dist/
+build/
+
+# Testing
+coverage/
+.jest/
+
+# Environment variables (keep base .env if you commit it intentionally)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Tooling caches
+.eslintcache
+.stylelintcache
+.turbo/
+.parcel-cache/
+.cache/
+.nyc_output/
+*.tsbuildinfo
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Vercel
+.vercel/
+
+# Storybook (if present)
+storybook-static/
+
+
