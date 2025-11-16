@@ -20,11 +20,11 @@ services:
   front:
     image: node:20
     container_name: alaphia-front
-    working_dir: /app
+    working_dir: /workspace
     volumes:
-      - ./front:/app
-      - front-node-modules:/app/node_modules
-    command: sh -c "npm ci && npm run dev"
+      - .:/workspace
+      - front-node-modules:/workspace/node_modules
+    command: sh -c "npm ci --include=optional && npm rebuild && npm --workspace front run dev"
     env_file:
       - ./.env
     environment:

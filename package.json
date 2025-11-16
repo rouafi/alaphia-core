@@ -14,5 +14,12 @@
     "compose:up:all": "docker compose --profile backend up -d",
     "compose:down": "docker compose down",
     "compose:logs": "docker compose logs -f --tail=200"
+  },
+  "dependencies": {
+    "lightningcss": "^1.30.2"
+  },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-linux-arm64-gnu": "^4.1.17",
+    "lightningcss-linux-arm64-gnu": "^1.30.2"
   }
 }

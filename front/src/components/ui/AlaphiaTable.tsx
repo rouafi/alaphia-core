@@ -25,6 +25,8 @@ type AlaphiaTableProps<T> = {
   page?: number
   defaultPage?: number
   onPageChange?: (page: number) => void
+  onRowClick?: (row: T, index: number) => void
+  selectedRowKey?: string | number
 }
 
 /**
@@ -46,6 +48,8 @@ export function AlaphiaTable<T>({
   page,
   defaultPage = 1,
   onPageChange,
+  onRowClick,
+  selectedRowKey,
 }: AlaphiaTableProps<T>) {
   const isControlled = typeof page === "number"
   const [internalPage, setInternalPage] = useState(defaultPage)
@@ -97,11 +101,21 @@ export function AlaphiaTable<T>({
             </tr>
           </thead>
           <tbody>
-            {pagedData.map((row, index) => (
-              <tr
-                key={getRowKey?.(row, startIndex + index) ?? startIndex + index}
-                className="h-11 border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface-alt)]"
-              >
+            {pagedData.map((row, index) => {
+              const rowKey = getRowKey?.(row, startIndex + index) ?? startIndex + index
+              const isSelected = selectedRowKey !== undefined && selectedRowKey === rowKey
+              return (
+                <tr
+                  key={rowKey}
+                  onClick={() => onRowClick?.(row, startIndex + index)}
+                  className={cn(
+                    "h-11 border-b border-[var(--border)] last:border-b-0 transition-colors",
+                    onRowClick && "cursor-pointer",
+                    isSelected
+                      ? "bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+                      : "hover:bg-[var(--surface-alt)]"
+                  )}
+                >
                 {columns.map((col) => (
                   <td key={String(col.key)} className={cn("px-4 py-2", col.className)}>
                     {col.render
@@ -111,8 +125,9 @@ export function AlaphiaTable<T>({
                         ] as ReactNode)}
                   </td>
                 ))}
-              </tr>
-            ))}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
