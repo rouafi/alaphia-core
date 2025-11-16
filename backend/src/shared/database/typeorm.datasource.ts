@@ -4,6 +4,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { User } from '../../shared/entities/user.entity.js';
+import { Workspace } from '../../shared/entities/workspace.entity.js';
 import { Contact } from '../../shared/entities/contact.entity.js';
 import { Interaction } from '../../shared/entities/interaction.entity.js';
 import { Intent } from '../../shared/entities/intent.entity.js';
@@ -45,7 +46,7 @@ if (match) {
     password,
     database,
     synchronize: false,
-    entities: [User, Contact, Interaction, Intent, Ingestion, MessageLog],
+    entities: [User, Workspace, Contact, Interaction, Intent, Ingestion, MessageLog],
     migrations: ['src/migrations/*.ts'],
     logging: false,
   };
@@ -56,7 +57,7 @@ if (match) {
     type: 'postgres',
     url: databaseUrl,
     synchronize: false,
-    entities: [User, Contact, Interaction, Intent, Ingestion, MessageLog],
+    entities: [User, Workspace, Contact, Interaction, Intent, Ingestion, MessageLog],
     migrations: ['src/migrations/*.ts'],
     logging: false,
   };

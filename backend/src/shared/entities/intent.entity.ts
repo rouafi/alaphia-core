@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from './user.entity.js';
+import { Workspace } from './workspace.entity.js';
 
 @Entity({ name: 'intents' })
 export class Intent {
@@ -7,7 +8,15 @@ export class Intent {
   id!: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'workspace_id' })
+  workspaceId!: string;
+
+  @ManyToOne(() => Workspace)
+  @JoinColumn({ name: 'workspace_id' })
+  workspace?: Workspace;
+
+  @Index()
+  @Column({ type: 'uuid', name: 'user_id' })
   userId!: string;
 
   @ManyToOne(() => User)

@@ -1,10 +1,19 @@
 import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, JoinColumn } from 'typeorm';
 import { User } from './user.entity.js';
+import { Workspace } from './workspace.entity.js';
 
 @Entity({ name: 'contacts' })
 export class Contact {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Index()
+  @Column({ type: 'uuid', name: 'workspace_id' })
+  workspaceId!: string;
+
+  @ManyToOne(() => Workspace)
+  @JoinColumn({ name: 'workspace_id' })
+  workspace?: Workspace;
 
   @Index()
   @Column({ type: 'uuid', name: 'user_id' })

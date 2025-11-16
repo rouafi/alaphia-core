@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn, Unique } from 'typeorm';
 import { User } from './user.entity.js';
 import { Contact } from './contact.entity.js';
+import { Workspace } from './workspace.entity.js';
 
 @Entity({ name: 'interactions' })
 @Unique(['userId', 'contactId'])
@@ -9,7 +10,15 @@ export class Interaction {
   id!: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'workspace_id' })
+  workspaceId!: string;
+
+  @ManyToOne(() => Workspace)
+  @JoinColumn({ name: 'workspace_id' })
+  workspace?: Workspace;
+
+  @Index()
+  @Column({ type: 'uuid', name: 'user_id' })
   userId!: string;
 
   @ManyToOne(() => User)

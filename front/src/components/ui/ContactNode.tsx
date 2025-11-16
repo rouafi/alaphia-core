@@ -47,6 +47,8 @@ type ContactNodeData = {
   lastName: string | null
   email: string | null
   company: string | null
+  position?: string | null
+  url?: string | null
   isCurrentUser?: boolean
 }
 
@@ -64,7 +66,7 @@ export const ContactNode = memo(({ data }: NodeProps<ContactNodeData>) => {
           "flex items-center justify-center rounded-full border-2 transition-all hover:scale-110",
           data.isCurrentUser
             ? "border-[#3B82F6] shadow-lg shadow-[#3B82F6]/20"
-            : "border-white/10 shadow-md"
+            : "border-white/10 shadow-md cursor-pointer"
         )}
         style={{
           width: size,

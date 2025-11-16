@@ -1,6 +1,6 @@
 
-
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Workspace } from './workspace.entity.js';
 
 @Entity({ name: 'message_logs' })
 export class MessageLog {
@@ -8,7 +8,15 @@ export class MessageLog {
   id!: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'workspace_id' })
+  workspaceId!: string;
+
+  @ManyToOne(() => Workspace)
+  @JoinColumn({ name: 'workspace_id' })
+  workspace?: Workspace;
+
+  @Index()
+  @Column({ type: 'uuid', name: 'user_id' })
   userId!: string;
 
   @Index()

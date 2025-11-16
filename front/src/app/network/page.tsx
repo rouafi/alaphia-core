@@ -1,11 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useCallback, useRef } from "react"
 import ReactFlow, {
   Background,
   Controls,
   type Edge,
   type Node,
+  type NodeMouseHandler,
+  useReactFlow,
+  ReactFlowProvider,
 } from "reactflow"
 
 import "reactflow/dist/style.css"
@@ -14,8 +17,10 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/Card"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { ContactNode } from "@/components/ui/ContactNode"
+import { ContactCard } from "@/components/ui/ContactCard"
 import { useContacts } from "@/lib/api/hooks/useContacts"
 import { Slider } from "@/components/ui/slider"
+import type { Contact } from "@/lib/api/contacts"
 
 // Current user data (from seed)
 const CURRENT_USER = {
@@ -49,8 +54,111 @@ const nodeTypes = {
   contact: ContactNode,
 }
 
+// Component to handle ReactFlow instance and card positioning
+function NetworkGraphContent({
+  nodes,
+  edges,
+  nodeTypes,
+  onNodeClick,
+  selectedContact,
+  selectedNodePosition,
+  onCloseCard,
+}: {
+  nodes: Node[]
+  edges: Edge[]
+  nodeTypes: any
+  onNodeClick: NodeMouseHandler
+  selectedContact: Contact | null
+  selectedNodePosition: { x: number; y: number } | null
+  onCloseCard: () => void
+}) {
+  const { flowToScreenPosition, getViewport } = useReactFlow()
+  const reactFlowWrapper = useRef<HTMLDivElement>(null)
+  const [viewport, setViewport] = useState(getViewport())
+
+  // Update viewport on pan/zoom
+  const onMove = useCallback(() => {
+    setViewport(getViewport())
+  }, [getViewport])
+
+  // Calculate card position above the node
+  const cardPosition = useMemo(() => {
+    if (!selectedNodePosition || !reactFlowWrapper.current) return null
+
+    try {
+      // Convert flow position to screen position (relative to ReactFlow viewport)
+      const screenPos = flowToScreenPosition({
+        x: selectedNodePosition.x,
+        y: selectedNodePosition.y,
+      })
+
+      // Position card above the node (node is 60px, add some spacing)
+      // Card width is approximately 280px, so center it by subtracting half
+      return {
+        left: screenPos.x - 140, // Half of card width (280px / 2)
+        top: screenPos.y - 180, // Above the node (60px node + 120px spacing)
+      }
+    } catch (error) {
+      // Fallback if flowToScreenPosition fails
+      return null
+    }
+  }, [selectedNodePosition, flowToScreenPosition, viewport])
+
+  return (
+    <div ref={reactFlowWrapper} className="relative h-full w-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodeClick={onNodeClick}
+        onMove={onMove}
+        onMoveStart={onMove}
+        onMoveEnd={onMove}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        style={{
+          background: "linear-gradient(135deg, #020617 0%, #0F172A 100%)",
+        }}
+      >
+        <Background
+          gap={24}
+          size={1}
+          color="rgba(148,163,184,0.25)"
+        />
+        <Controls
+          className="!bg-[#111827]/80 !text-white"
+          showInteractive={false}
+        />
+      </ReactFlow>
+
+      {/* Contact Card Overlay - positioned above the clicked node */}
+      {selectedContact && cardPosition && (
+        <div
+          className="absolute z-10"
+          style={{
+            left: `${cardPosition.left}px`,
+            top: `${cardPosition.top}px`,
+          }}
+        >
+          <ContactCard
+            firstName={selectedContact.firstName}
+            lastName={selectedContact.lastName}
+            email={selectedContact.email}
+            company={selectedContact.company}
+            position={selectedContact.position}
+            url={selectedContact.url}
+            onClose={onCloseCard}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function NetworkPage() {
   const [relationshipCount, setRelationshipCount] = useState(50)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
+  const [selectedNodePosition, setSelectedNodePosition] = useState<{ x: number; y: number } | null>(null)
 
   // Fetch contacts - we need all contacts to filter and order them
   // Don't pass pagination params to get all contacts, or fetch multiple pages
@@ -111,11 +219,31 @@ export default function NetworkPage() {
         lastName: contact.lastName,
         email: contact.email,
         company: contact.company,
+        position: contact.position,
+        url: contact.url,
         isCurrentUser: false,
       },
     }))
 
     return [centerNode, ...contactNodes]
+  }, [contacts])
+
+  // Handle node click
+  const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
+    // Don't show card for current user
+    if (node.id === CURRENT_USER.id) {
+      setSelectedContact(null)
+      setSelectedNodePosition(null)
+      return
+    }
+
+    // Find the contact data
+    const contact = contacts.find((c) => c.id === node.id)
+    if (contact) {
+      setSelectedContact(contact)
+      // Store node position for card placement
+      setSelectedNodePosition({ x: node.position.x, y: node.position.y })
+    }
   }, [contacts])
 
   // Create edges from center to all contacts
@@ -187,26 +315,20 @@ export default function NetworkPage() {
               <p className="text-sm text-white/60">No contacts found. Import contacts to see your network.</p>
             </div>
           ) : (
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={nodeTypes}
-              fitView
-              fitViewOptions={{ padding: 0.2 }}
-              style={{
-                background: "linear-gradient(135deg, #020617 0%, #0F172A 100%)",
-              }}
-            >
-              <Background
-                gap={24}
-                size={1}
-                color="rgba(148,163,184,0.25)"
+            <ReactFlowProvider>
+              <NetworkGraphContent
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                onNodeClick={onNodeClick}
+                selectedContact={selectedContact}
+                selectedNodePosition={selectedNodePosition}
+                onCloseCard={() => {
+                  setSelectedContact(null)
+                  setSelectedNodePosition(null)
+                }}
               />
-              <Controls
-                className="!bg-[#111827]/80 !text-white"
-                showInteractive={false}
-              />
-            </ReactFlow>
+            </ReactFlowProvider>
           )}
         </div>
       </Card>
