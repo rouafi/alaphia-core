@@ -20,6 +20,7 @@ export interface ContactRepositoryPort {
     page: number,
     limit: number,
   ): Promise<PaginatedResult<Contact>>;
+  updateEmbedding(contactId: string, embedding: number[]): Promise<void>;
 }
 
 // Injection token for dependency injection (using string token)

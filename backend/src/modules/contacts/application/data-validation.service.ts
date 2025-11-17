@@ -6,6 +6,7 @@ export interface RawContactData {
   company?: string;
   position?: string;
   connectedOn?: string;
+  embedding?: number[]; // Optional 768-dim embedding vector
 }
 
 export class DataValidationService {

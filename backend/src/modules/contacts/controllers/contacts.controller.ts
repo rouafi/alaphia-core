@@ -84,6 +84,7 @@ export class ContactsController {
         company: r.company,
         position: r.position,
         connectedOn: undefined, // Not in DTO, would need to be added
+        embedding: r.embedding, // Optional embedding vector (768-dim)
       }));
     } else {
       return {

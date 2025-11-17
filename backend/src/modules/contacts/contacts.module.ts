@@ -10,12 +10,14 @@ import { DataModelingService } from './domain/services/data-modeling.service.js'
 import { PostgresContactAdapter, WORKSPACE_ID_TOKEN } from './infrastructure/adapters/postgres-contact-adapter.js';
 import { CONTACT_REPOSITORY_PORT } from './domain/ports/contact-repository.port.js';
 import { WorkspaceResolverService } from '../../shared/services/workspace-resolver.service.js';
+import { EmbeddingService } from '../../shared/services/embedding.service.js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Contact, Workspace])],
   controllers: [ContactsController],
   providers: [
     WorkspaceResolverService,
+    EmbeddingService,
     IngestContactsService,
     DataValidationService,
     CsvParserService,

@@ -36,6 +36,13 @@ export class DataModelingService {
       }
     }
 
+    // Note: profile_text is a generated column, so it's automatically computed by the database
+    // from position and company. We don't need to set it here.
+
+    // Note: embedding is handled separately via raw SQL since TypeORM doesn't support vector types
+    // If embedding is provided in rawData, it should be set after contact creation using raw SQL
+    // For now, we'll save the contact first, then embeddings can be updated later
+
     return contact;
   }
 }

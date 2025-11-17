@@ -18,6 +18,8 @@ POSTGRES_PORT=5432
 DATABASE_URL=postgresql://alaphia:alaphia@localhost:5432/alaphia
 FRONT_PORT=3000
 # BACKEND_PORT is optional; defaults to 4000 in the app
+# OPENAI_API_KEY is required for embedding generation (text-embedding-3-small)
+OPENAI_API_KEY=sk-...
 ```
 
 ## Quickstart (Docker Compose)

@@ -32,6 +32,16 @@ class ContactRecordDto {
   @IsOptional()
   @IsString()
   position?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'Embedding vector (768-dim) for semantic search. If not provided, can be generated later.',
+    type: [Number],
+    example: [0.1, 0.2, 0.3, /* ... 768 numbers total ... */]
+  })
+  @IsOptional()
+  @IsArray()
+  embedding?: number[];
 }
 
 export class IngestRequestDto {
