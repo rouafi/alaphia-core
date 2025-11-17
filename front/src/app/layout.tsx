@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 
-import { AppShell } from "@/components/layout/AppShell"
 import { QueryProvider } from "@/components/providers/QueryProvider"
+import { Auth0ProviderWithConfig } from "@/components/providers/Auth0ProviderWithConfig"
 
 import "./globals.css"
 
@@ -24,9 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <QueryProvider>
-          <AppShell>{children}</AppShell>
-        </QueryProvider>
+        <Auth0ProviderWithConfig>
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+        </Auth0ProviderWithConfig>
       </body>
     </html>
   )

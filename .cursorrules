@@ -209,3 +209,162 @@ Before you propose architecture, generate boilerplate, or refactor:
 
 ## Runtime
 - I need you to always run a npm intall after adding new library
+
+
+# Authentication
+These rules apply to the whole project (frontend + backend).  
+
+---
+
+## 1. Authentication – Global Principles
+
+- Use **Auth0** as the single identity provider.
+- Use **Auth0 Universal Login** (hosted pages) for signup/sign-in.
+- Use **Auth0 official SDKs**, not custom low-level HTTP calls, whenever possible.
+- Support:
+  - Email/password (via Auth0 database connection)
+  - Google and Microsoft social login (configured in Auth0 dashboard)
+- Do **not** store or hash passwords in our own DB.
+- Do **not** store tokens in `localStorage` / `sessionStorage`. Use secure cookies or built-in session handling from SDKs.
+- Do **not** use NextAuth or Passport for authentication in this project.
+
+Environment variables (typed and validated):
+
+- `AUTH0_DOMAIN`
+- `AUTH0_CLIENT_ID`
+- `AUTH0_CLIENT_SECRET`
+- `AUTH0_AUDIENCE`            (API identifier for backend)
+- `AUTH0_ISSUER_BASE_URL`     (e.g. `https://<tenant>.eu.auth0.com`)
+- `AUTH0_BASE_URL`            (frontend URL, e.g. `https://app.example.com`)
+
+---
+
+## 2. Frontend (Next.js) – Auth Integration
+
+Use **`@auth0/nextjs-auth0`** as the main auth library.
+
+### 2.1 Setup
+
+- Install `@auth0/nextjs-auth0` and configure it using `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_ISSUER_BASE_URL`, `AUTH0_BASE_URL`.
+- Use the SDK’s **built-in API routes** (Next.js route handlers or pages API) for:
+  - `/api/auth/login`
+  - `/api/auth/logout`
+  - `/api/auth/callback`
+  - `/api/auth/me`
+
+Cursor must **not** reimplement the OAuth flow manually. Use the official examples from Auth0 for Next.js.
+
+### 2.2 Auth UI Pages
+
+Create **two pages** (`/auth/login` and `/auth/signup`) that act as UX shells and call the built-in Auth0 endpoints.
+
+#### `/auth/login`
+
+- Layout similar spirit to the Lemlist screenshot:
+  - Centered card, rounded corners, shadow
+  - Title like “Se connecter”
+  - Two large buttons:
+    - “Continuer avec Google”
+    - “Continuer avec Microsoft”
+  - A primary button like “Se connecter avec email”
+  - A small link “Créer un compte” that routes to `/auth/signup`.
+
+**Behavior:**
+
+- The Google and Microsoft buttons must call `@auth0/nextjs-auth0` login with the proper connection, for example by linking to:
+  - `/api/auth/login?connection=google-oauth2`
+  - `/api/auth/login?connection=azuread` (or whatever connection is configured in Auth0)
+- The “Se connecter avec email” button simply calls `/api/auth/login` (which will show the Universal Login with email/password).
+- The page itself does **not** handle email/password; that is handled by Auth0 Universal Login.
+
+#### `/auth/signup`
+
+- Same visual style as login (card, nice spacing).
+- Title like “Créer un compte” or “Commencer gratuitement”.
+- Buttons:
+  - “Créer un compte avec Google”
+  - “Créer un compte avec Microsoft”
+  - A main CTA like “Créer un compte avec email”.
+- Text link to “Vous avez déjà un compte ? Se connecter” which routes to `/auth/login`.
+
+**Behavior:**
+
+- Use `/api/auth/login?screen_hint=signup` to trigger the **signup** flow in Universal Login.
+- Social signup uses:
+  - `/api/auth/login?screen_hint=signup&connection=google-oauth2`
+  - `/api/auth/login?screen_hint=signup&connection=azuread`
+- Again, the actual email/password form is handled by Auth0’s hosted page.
+
+### 2.3 Session & User on the Frontend
+
+- Use `@auth0/nextjs-auth0` helpers (e.g. `useUser` or `getSession`) to get the current user.
+- Protect pages like `/dashboard` with Auth0’s `withPageAuthRequired` (or equivalent in app router).
+- Do **not** manually parse or store ID/access tokens on the frontend.
+
+---
+
+## 3. Backend (NestJS) – Protected API Using Auth0
+
+The NestJS backend acts as a **resource server** that validates JWT access tokens issued by Auth0.
+
+### 3.1 Token Validation
+
+- Use **Auth0’s recommended Node stack**:
+  - `jwks-rsa` to fetch public keys (JWKs) from Auth0
+  - A JWT validation library (`express-jwt` or equivalent) integrated with NestJS
+- Configure validation with:
+  - `issuer` = `AUTH0_ISSUER_BASE_URL`
+  - `audience` = `AUTH0_AUDIENCE`
+
+Cursor must:
+
+- Create a **NestJS auth module** that exposes:
+  - a JWT strategy using the Auth0 issuer and audience
+  - a guard (e.g. `AuthGuard('jwt')`) for protecting routes
+- Rely on **Auth0 access tokens** issued by Universal Login; do **not** issue custom JWTs for user identity at this stage.
+
+### 3.2 API Usage Pattern
+
+- Frontend (Next.js) calls the backend API with the Auth0 **access token**.
+- The backend verifies the token via JWKS (JWKs from Auth0).
+- Example protected routes:
+  - `/api/me` – returns basic profile info based on token claims
+  - `/api/graph/...` – protected endpoints for your network graph features
+
+CORS and credentials should be configured so the frontend can send the bearer token (e.g. via `Authorization: Bearer <access_token>`).
+
+---
+
+## 4. Flow Summary (End-to-End)
+
+### Signup / Login
+
+1. User lands on `/auth/signup` or `/auth/login`.
+2. Clicks:
+   - Google / Microsoft button → redirects to `/api/auth/login?...` from `@auth0/nextjs-auth0`.
+   - Email button → redirects to `/api/auth/login` (with or without `screen_hint=signup`).
+3. Auth0 Universal Login handles:
+   - email/password
+   - social login (Google, Microsoft)
+4. Auth0 redirects back to `/api/auth/callback`, handled by `@auth0/nextjs-auth0`.
+5. The SDK creates a **server-side session** (using secure cookies) for Next.js.
+6. Authenticated pages (`/dashboard`, etc.) use `withPageAuthRequired` or similar to enforce login and access `user` data.
+
+### Calling the backend API
+
+1. On the server side (getServerSideProps, route handlers) or via API routes, obtain the **access token** using `@auth0/nextjs-auth0` utilities.
+2. Include the access token in `Authorization: Bearer <token>` when calling NestJS backend.
+3. NestJS validates the token using Auth0’s JWKS and the configured audience/issuer.
+4. If valid, NestJS processes the request and returns data.
+5. If invalid/expired, NestJS returns 401, and frontend can trigger a re-login.
+
+---
+
+## 5. What Cursor Must Avoid
+
+- No manual `/dbconnections/signup` or `/oauth/token` HTTP calls in our own code unless strictly necessary; prefer the **Auth0 Next.js SDK**.
+- No custom email/password forms that bypass Auth0’s Universal Login for authentication logic.
+- No token storage in `localStorage` or `sessionStorage`.
+- No NextAuth, no Passport; rely on Auth0 SDK on the frontend and JWT validation on the backend.
+
+---

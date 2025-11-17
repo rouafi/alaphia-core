@@ -9,6 +9,8 @@ import {
   TrendingUp,
 } from "lucide-react"
 
+import { useAuth0 } from "@auth0/auth0-react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 
@@ -29,6 +31,17 @@ type TopbarProps = {
 }
 
 export function Topbar({ collapsed = false, onToggleSidebar }: TopbarProps) {
+  const { user, isAuthenticated, logout } = useAuth0()
+
+  const fallbackInitials = user?.name
+    ? user.name
+        .split(" ")
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "WS"
+
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--panel)_95%,transparent)] backdrop-blur">
       <div className="flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
@@ -92,8 +105,14 @@ export function Topbar({ collapsed = false, onToggleSidebar }: TopbarProps) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-left text-sm text-[color:var(--foreground)]/70 hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)]">
                 <Avatar className="size-9 border border-[var(--border)]">
+                  {isAuthenticated && user?.picture ? (
+                    <AvatarImage
+                      src={user.picture}
+                      alt={user.name || "User avatar"}
+                    />
+                  ) : null}
                   <AvatarFallback className="bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] text-[var(--foreground)]">
-                    RS
+                    {fallbackInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div
@@ -102,8 +121,12 @@ export function Topbar({ collapsed = false, onToggleSidebar }: TopbarProps) {
                     collapsed && "md:hidden"
                   )}
                 >
-                  <p className="text-sm font-semibold text-[var(--foreground)]">Reda Saad</p>
-                  <p className="text-xs opacity-50 text-[var(--foreground)]">Workspace Admin</p>
+                  <p className="text-sm font-semibold text-[var(--foreground)]">
+                    {isAuthenticated ? user?.name : "Guest"}
+                  </p>
+                  <p className="text-xs opacity-50 text-[var(--foreground)]">
+                    {isAuthenticated ? user?.email : "Not signed in"}
+                  </p>
                 </div>
               </button>
             </DropdownMenuTrigger>
@@ -125,7 +148,13 @@ export function Topbar({ collapsed = false, onToggleSidebar }: TopbarProps) {
                 Workspace settings
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[var(--divider)]" />
-              <DropdownMenuItem className="text-danger">
+              <DropdownMenuItem
+                className="text-danger"
+                onSelect={(event) => {
+                  event.preventDefault()
+                  logout({ logoutParams: { returnTo: window.location.origin } })
+                }}
+              >
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
