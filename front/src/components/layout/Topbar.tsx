@@ -4,9 +4,9 @@ import {
   Bell,
   HelpCircle,
   Menu,
-  Plus,
   Sparkles,
   TrendingUp,
+  Target,
 } from "lucide-react"
 
 import { useAuth0 } from "@auth0/auth0-react"
@@ -96,8 +96,8 @@ export function Topbar({ collapsed = false, onToggleSidebar }: TopbarProps) {
             <Bell className="size-4" />
           </Button>
           <Button className="hidden h-9 rounded-md bg-[var(--accent)] px-4 text-sm font-medium text-[var(--color-primary-foreground,#fff)] hover:brightness-110 md:inline-flex">
-            <Plus className="mr-2 size-4" />
-            New Recording
+            <Target className="mr-2 size-4" />
+            Add Targets
           </Button>
 
           <ThemeToggle />
